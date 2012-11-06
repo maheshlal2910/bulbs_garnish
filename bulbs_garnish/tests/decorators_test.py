@@ -106,7 +106,7 @@ class HasRelationshipTest(unittest.TestCase):
         self.user = self.g.user.create(username='user1')
         self.known_user = self.g.user.create(username='user2')
         self.g.knows.create(self.user, self.known_user)
-        
+    
     def test_has_relationship_adds_the_method_provided(self):
         self.assertTrue('knows' in dir(self.user))
     
@@ -127,6 +127,10 @@ class HasRelationshipTest(unittest.TestCase):
         self.user.knows(self.known_user)
         count_of_known_people = sum(1 for user in self.user.knows())
         self.assertEquals(count_of_known_people, 1)
+    
+    def test_should_add_relationship_if_none_exists_previously(self):
+        self.known_user.knows(self.user)
+        self.assertTrue(self.user in self.known_user.outV('knows'))
     
     def tearDown(self):
         self.g.clear()

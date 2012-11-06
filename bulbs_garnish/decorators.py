@@ -18,7 +18,8 @@ class HasRelationship(object):
             assert entity is None or entity.element_type==rel_class
             if entity is None:
                 return self.outV(relationship.label)
-            if entity not in self.outV(relationship.label):
+            rels = self.outV(relationship.label)
+            if rels is None or entity not in rels:
                 getattr(self.g,relationship.label).create(self, entity)
         return proxy_func
 
@@ -32,14 +33,11 @@ def ActiveModel(cls):
         cls.g = graph
     setattr(cls, 'register', classmethod(register))
     if('element_type' in dir(cls)):
-
         def get_or_create(cls, **kwds):
             key = cls.document_primaries[0]
-            print cls.document_primaries
             val = kwds[key]
             return getattr(cls.g,cls.element_type).get_or_create(key, val, **kwds)
         setattr(cls, 'get_or_create', classmethod(get_or_create))
-
         def get_unique(cls, **kwds):
             return getattr(cls.g,cls.element_type).index.get_unique(**kwds)
         setattr(cls, 'get_unique', classmethod(get_unique))
@@ -49,5 +47,6 @@ def ActiveModel(cls):
                 if attribute in dir(self):
                     setattr(self, attribute, val[attribute]) 
             self.save()
+            return self
         setattr(cls, 'update', update)
     return cls
