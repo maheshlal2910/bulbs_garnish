@@ -7,10 +7,15 @@ from config import graph_db_path
 
 from bulbs_garnish.bulbs_garnish.decorators import *
 
-
+@IsMirrorRelationshipOf("knows")
 @ActiveModel
 class Knows(Relationship):
     label='knows'
+
+
+@ActiveModel
+class ParentOf(Relationship):
+    label="parent_of"
 
 
 @ActiveModel
@@ -18,6 +23,7 @@ class Unknown(Node):
     element_type='unknown'
 
 
+@HasRelationship({ParentOf:'user'})
 @HasRelationship({Knows:'user'})
 @ActiveModel
 class User(Node):
@@ -99,24 +105,26 @@ class HasRelationshipTest(unittest.TestCase):
 
     def setUp(self):
         self.g = graph_db_path()
+        ParentOf.register(self.g)
         User.register(self.g)
         Knows.register(self.g)
         Unknown.register(self.g)
         self.g.add_proxy('knows', Knows)
         self.user = self.g.user.create(username='user1')
         self.known_user = self.g.user.create(username='user2')
-        self.g.knows.create(self.user, self.known_user)
     
     def test_has_relationship_adds_the_method_provided(self):
         self.assertTrue('knows' in dir(self.user))
-    
-    def test_the_method_accepts_None(self):
-        self.assertTrue(self.user.knows(), self.user.outV('knows'))
     
     def test_the_method_saves_relationship_to_another_object_if_provided(self):
         user_3 = User.get_or_create(username='user3')
         self.user.knows(user_3)
         self.assertTrue(user_3 in self.user.outV('knows'))
+    
+    def test_the_method_accepts_None(self):
+        self.assertTrue(self.user.knows() is None)
+        self.user.knows(self.known_user)
+        self.assertTrue(self.user.knows() is not None)
     
     def test_throws_error_if_unsupported_type_supplied(self):
         unknown = self.g.unknown.create()
@@ -132,5 +140,30 @@ class HasRelationshipTest(unittest.TestCase):
         self.known_user.knows(self.user)
         self.assertTrue(self.user in self.known_user.outV('knows'))
     
+    def test_should_add_the_dual_relation_in_case_dual_is_defined(self):
+        self.user.knows(self.known_user)
+        self.assertTrue(self.known_user in self.user.knows())
+        self.assertTrue(self.user in self.known_user.knows())
+    
+    def test_shouldnt_add_dual_to_relationships_which_arent_dual(self):
+        self.user.parent_of(self.known_user)
+        self.assertTrue(self.known_user.parent_of() is None)
+    
     def tearDown(self):
         self.g.clear()
+
+class IsMirrorRelationshipOfTest(unittest.TestCase):
+    
+    def setUp(self):
+        self.g = graph_db_path()
+        self.g.add_proxy('knows', Knows)
+        self.g.add_proxy('user', User)
+        self.user = self.g.user.create(username='user1')
+    
+    def test_should_add_dual_in_class(self):
+        self.assertEquals(Knows.dual, 'knows')
+    
+    def tearDown(self):
+        self.g.clear()
+
+

@@ -2,6 +2,16 @@
 
 from bulbs.model import Node, Relationship
 
+class IsMirrorRelationshipOf(object):
+    
+    def __init__(self, relationship):
+        self.dual = relationship
+    
+    def __call__(self, cls):
+        setattr(cls, 'dual', self.dual)
+        return cls
+
+
 class HasRelationship(object):
     
     def __init__(self, relationship):
@@ -12,7 +22,7 @@ class HasRelationship(object):
         func = self.__create_proxy(relationship, rel_class)
         setattr(cls, relationship.label, func)
         return cls
-        
+    
     def __create_proxy(self, relationship, rel_class):
         def proxy_func(self, entity=None):
             assert entity is None or entity.element_type==rel_class
@@ -20,7 +30,10 @@ class HasRelationship(object):
                 return self.outV(relationship.label)
             rels = self.outV(relationship.label)
             if rels is None or entity not in rels:
+                print True
                 getattr(self.g,relationship.label).create(self, entity)
+                if 'dual' in dir(relationship):
+                    getattr(entity, relationship.dual)(self)
         return proxy_func
 
 

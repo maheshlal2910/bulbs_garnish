@@ -3,7 +3,7 @@
 from bulbs.neo4jserver import Graph, Config
 from bulbs.config import DEBUG
 
-GRAPH='http://localhost:4747/db/test'
+GRAPH='http://localhost:4747/db/data'
 
 def graph_db_path():
     config = Config(GRAPH)
