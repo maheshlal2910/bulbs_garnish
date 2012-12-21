@@ -48,6 +48,7 @@ def ActiveModel(cls):
     if('element_type' in dir(cls)):
         def get_or_create(cls, **kwds):
             key = cls.document_primaries[0]
+            print key
             val = kwds[key]
             return getattr(cls.g,cls.element_type).get_or_create(key, val, **kwds)
         setattr(cls, 'get_or_create', classmethod(get_or_create))
