@@ -5,7 +5,7 @@ from bulbs.model import Node, Relationship
 from bulbs.property import String, Integer
 from config import graph_db_path
 
-from bulbs_garnish.bulbs_garnish.decorators import *
+from bulbs_garnish.decorators import *
 
 @IsMirrorRelationshipOf("knows")
 @ActiveModel

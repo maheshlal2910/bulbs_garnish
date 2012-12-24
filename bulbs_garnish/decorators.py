@@ -30,10 +30,9 @@ class HasRelationship(object):
                 return self.outV(relationship.label)
             rels = self.outV(relationship.label)
             if rels is None or entity not in rels:
-                print True
                 getattr(self.g,relationship.label).create(self, entity)
                 if 'dual' in dir(relationship):
-                    getattr(entity, relationship.dual)(self)
+                    getattr(self.g, relationship.dual).create(entity, self)
         return proxy_func
 
 
@@ -48,7 +47,6 @@ def ActiveModel(cls):
     if('element_type' in dir(cls)):
         def get_or_create(cls, **kwds):
             key = cls.document_primaries[0]
-            print key
             val = kwds[key]
             return getattr(cls.g,cls.element_type).get_or_create(key, val, **kwds)
         setattr(cls, 'get_or_create', classmethod(get_or_create))
