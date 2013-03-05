@@ -1,11 +1,12 @@
 # vim: ai ts=4 sts=4 et sw=4 encoding=utf-8
 
 import unittest
-from bulbs.model import Node, Relationship
 from bulbs.property import String, Integer
 from config import graph_db_path
 
+from bulbs_garnish.models import *
 from bulbs_garnish.decorators import *
+
 
 @IsMirrorRelationshipOf("knows")
 @ActiveModel

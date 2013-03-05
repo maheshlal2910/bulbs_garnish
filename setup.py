@@ -5,5 +5,5 @@ setup(name='bulbs_garnish',
       description='A wrapper on top of Bulbs (the framework for Neo4J) to actually make Models take control.',
       author='Mahesh Lal',
       author_email='mahesh.2910@gmail.com',
-      py_modules=['bulbs_garnish.decorators']
+      py_modules=['bulbs_garnish.decorators', 'bulbs_garnish.models']
      )
