@@ -53,7 +53,9 @@ def ActiveModel(cls):
         def get_unique(cls, **kwds):
             return getattr(cls.g,cls.element_type).index.get_unique(**kwds)
         setattr(cls, 'get_unique', classmethod(get_unique))
-        
+        def get_count_of_nodes_which_have(cls, **kwds):
+            return getattr(cls.g,cls.element_type).index.count(**kwds)
+        setattr(cls, 'get_count_of_nodes_which_have', classmethod(get_count_of_nodes_which_have))
         def update(self, **val):
             for attribute in val:
                 if attribute in dir(self):

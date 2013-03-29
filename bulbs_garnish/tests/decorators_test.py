@@ -98,6 +98,12 @@ class ActiveModelTests(unittest.TestCase):
         user = User.get_or_create(**user_id)
         self.assertEquals('johndoe', user.username)
     
+    def test_ActiveModel_get_or_create_should_add_method_to_get_nodes_matching_criteria(self):
+        john_doe = User.get_or_create(username= 'johndoe', age='18')
+        chuck_norris = User.get_or_create(username= 'chucknorris', age= '1000')
+        rajni_cant = User.get_or_create(username= 'rajnicant', age= '1000')
+        self.assertEquals(2, User.get_count_of_nodes_which_have(age= '1000'))
+    
     def tearDown(self):
         self.g.clear()
 
@@ -166,5 +172,3 @@ class IsMirrorRelationshipOfTest(unittest.TestCase):
     
     def tearDown(self):
         self.g.clear()
-
-
