@@ -1,4 +1,5 @@
 # vim: ai ts=4 sts=4 et sw=4 encoding=utf-8
+import hashlib
 
 from bulbs_garnish.models import *
 
@@ -46,9 +47,11 @@ def ActiveModel(cls):
     setattr(cls, 'register', classmethod(register))
     if('element_type' in dir(cls)):
         def get_or_create(cls, **kwds):
-            key = cls.document_primaries[0]
-            val = kwds[key]
-            return getattr(cls.g,cls.element_type).get_or_create(key, val, **kwds)
+            ids = [str(kwds[key]) for key in cls.keys]
+            id_string = "".join(ids)
+            model_id = hashlib.sha224(id_string).hexdigest()
+            kwds.update({"model_id": model_id})
+            return getattr(cls.g,cls.element_type).get_or_create("model_id", model_id, **kwds)
         setattr(cls, 'get_or_create', classmethod(get_or_create))
         def get_unique(cls, **kwds):
             return getattr(cls.g,cls.element_type).index.get_unique(**kwds)

@@ -1,6 +1,7 @@
 # vim: ai ts=4 sts=4 et sw=4 encoding=utf-8
 
 import unittest
+import hashlib
 from bulbs.property import String, Integer
 from config import graph_db_path
 
@@ -29,9 +30,9 @@ class Unknown(Node):
 @ActiveModel
 class User(Node):
     element_type='user'
+    keys=['username', 'age']
     username = String(nullable=False)
-    age= Integer()
-    document_primaries=['username']
+    age= Integer(nullable=False)
 
 
 class ActiveModelTests(unittest.TestCase):
@@ -61,12 +62,13 @@ class ActiveModelTests(unittest.TestCase):
         self.assertTrue('get_or_create' not in dir(Knows))
     
     def test_ActiveModel_get_or_create_should_return_existing_node(self):
-        expected_user = self.g.user.create(username="user2")
-        retreived_user = User.get_or_create(username="user2")
-        self.assertTrue(expected_user == retreived_user)
+        user_id = hashlib.sha224("user210").hexdigest()
+        expected_user = self.g.user.create(model_id=user_id, username="user2", age=10)
+        retreived_user = User.get_or_create(username="user2", age=10)
+        self.assertEquals(expected_user, retreived_user)
     
     def test_ActiveModel_get_or_create_should_create_new_node(self):
-        user = User.get_or_create(username="user1")
+        user = User.get_or_create(username="user1", age=20)
         self.assertIsNot(user, None)
         self.assertEquals(user.username, "user1")
     
@@ -77,7 +79,8 @@ class ActiveModelTests(unittest.TestCase):
         self.assertTrue('get_unique' not in dir(Knows))
     
     def test_ActiveModel_get_unique_should_return_existing_node(self):
-        expected_user = self.g.user.create(username="user2")
+        user_id = hashlib.sha224("user220").hexdigest()
+        expected_user = self.g.user.create(model_id=user_id, username="user2", age=20)
         retreived_user = User.get_unique(username="user2")
         self.assertTrue(expected_user == retreived_user)
     
@@ -88,21 +91,30 @@ class ActiveModelTests(unittest.TestCase):
         self.assertTrue('update' in dir(User))
     
     def test_ActiveModel_update_should_update_the_object_with_said_values(self):
-        user = self.g.user.create(username="user2")
-        user.update(age=27)
+        user_id = hashlib.sha224("user227").hexdigest()
+        user = self.g.user.create(model_id=user_id, username="user2", age=27)
+        user.update(age=28)
         user = self.g.user.get(user._id)
-        self.assertEquals(27, user.age)
+        self.assertEquals(28, user.age)
     
     def test_ActiveModel_get_or_create_should_create_new_node_with_dict(self):
-        user_id = dict(username='johndoe')
+        user_id = dict(username='johndoe', age=10)
         user = User.get_or_create(**user_id)
         self.assertEquals('johndoe', user.username)
     
     def test_ActiveModel_get_or_create_should_add_method_to_get_nodes_matching_criteria(self):
-        john_doe = User.get_or_create(username= 'johndoe', age='18')
-        chuck_norris = User.get_or_create(username= 'chucknorris', age= '1000')
-        rajni_cant = User.get_or_create(username= 'rajnicant', age= '1000')
-        self.assertEquals(2, User.get_count_of_nodes_which_have(age= '1000'))
+        john_doe = User.get_or_create(username= 'johndoe', age=18)
+        chuck_norris = User.get_or_create(username= 'chucknorris', age= 1000)
+        rajni_cant = User.get_or_create(username= 'rajnicant', age= 1000)
+        self.assertEquals(2, User.get_count_of_nodes_which_have(age= 1000))
+    
+    def test_get_unique_can_fetch_unique_items(self):
+        john_doe = User.get_or_create(username= 'johndoe', age=18)
+        chuck_norris = User.get_or_create(username= 'chucknorris', age= 1000)
+        rajni_cant = User.get_or_create(username= 'rajnicant', age= 1000)
+        rajni_cant2 = User.get_or_create(username= 'rajni_cant', age= 1000)
+        self.assertEquals(rajni_cant, User.get_unique(username='rajnicant', age= 1000))
+        self.assertEquals(rajni_cant2, User.get_unique(username='rajni_cant', age= 1000))
     
     def tearDown(self):
         self.g.clear()
@@ -117,14 +129,16 @@ class HasRelationshipTest(unittest.TestCase):
         Knows.register(self.g)
         Unknown.register(self.g)
         self.g.add_proxy('knows', Knows)
-        self.user = self.g.user.create(username='user1')
-        self.known_user = self.g.user.create(username='user2')
+        user1_id = hashlib.sha224("user110").hexdigest()
+        user2_id = hashlib.sha224("user210").hexdigest()
+        self.user = self.g.user.create(model_id=user1_id, username='user1', age=10)
+        self.known_user = self.g.user.create(model_id=user2_id, username='user2', age=10)
     
     def test_has_relationship_adds_the_method_provided(self):
         self.assertTrue('knows' in dir(self.user))
     
     def test_the_method_saves_relationship_to_another_object_if_provided(self):
-        user_3 = User.get_or_create(username='user3')
+        user_3 = User.get_or_create(username='user3', age=10)
         self.user.knows(user_3)
         self.assertTrue(user_3 in self.user.outV('knows'))
     
@@ -134,7 +148,7 @@ class HasRelationshipTest(unittest.TestCase):
         self.assertTrue(self.user.knows() is not None)
     
     def test_throws_error_if_unsupported_type_supplied(self):
-        unknown = self.g.unknown.create()
+        unknown = self.g.unknown.create(model_id='1')
         with self.assertRaises(AssertionError):
             self.user.knows(unknown)
     
@@ -165,7 +179,8 @@ class IsMirrorRelationshipOfTest(unittest.TestCase):
         self.g = graph_db_path()
         self.g.add_proxy('knows', Knows)
         self.g.add_proxy('user', User)
-        self.user = self.g.user.create(username='user1')
+        user_id = hashlib.sha224('user110').hexdigest()
+        self.user = self.g.user.create(model_id=user_id, username='user1', age=10)
     
     def test_should_add_dual_in_class(self):
         self.assertEquals(Knows.dual, 'knows')
