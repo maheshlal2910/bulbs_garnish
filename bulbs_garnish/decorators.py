@@ -47,6 +47,7 @@ def ActiveModel(cls):
     setattr(cls, 'register', classmethod(register))
     if('element_type' in dir(cls)):
         def get_or_create(cls, **kwds):
+            cls.keys.sort()
             ids = [str(kwds[key]) for key in cls.keys]
             id_string = "".join(ids)
             model_id = hashlib.sha224(id_string).hexdigest()
@@ -54,7 +55,11 @@ def ActiveModel(cls):
             return getattr(cls.g,cls.element_type).get_or_create("model_id", model_id, **kwds)
         setattr(cls, 'get_or_create', classmethod(get_or_create))
         def get_unique(cls, **kwds):
-            return getattr(cls.g,cls.element_type).index.get_unique(**kwds)
+            cls.keys.sort()
+            ids = [str(kwds.get(key)) for key in cls.keys]
+            id_string = "".join(ids)
+            model_id = hashlib.sha224(id_string).hexdigest()
+            return getattr(cls.g,cls.element_type).index.get_unique("model_id", model_id)
         setattr(cls, 'get_unique', classmethod(get_unique))
         def get_count_of_nodes_which_have(cls, **kwds):
             return getattr(cls.g,cls.element_type).index.count(**kwds)

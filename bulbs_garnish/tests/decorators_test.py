@@ -30,7 +30,7 @@ class Unknown(Node):
 @ActiveModel
 class User(Node):
     element_type='user'
-    keys=['username', 'age']
+    keys=['age', 'username']
     username = String(nullable=False)
     age= Integer(nullable=False)
 
@@ -62,7 +62,7 @@ class ActiveModelTests(unittest.TestCase):
         self.assertTrue('get_or_create' not in dir(Knows))
     
     def test_ActiveModel_get_or_create_should_return_existing_node(self):
-        user_id = hashlib.sha224("user210").hexdigest()
+        user_id = hashlib.sha224("10user2").hexdigest()
         expected_user = self.g.user.create(model_id=user_id, username="user2", age=10)
         retreived_user = User.get_or_create(username="user2", age=10)
         self.assertEquals(expected_user, retreived_user)
@@ -79,9 +79,9 @@ class ActiveModelTests(unittest.TestCase):
         self.assertTrue('get_unique' not in dir(Knows))
     
     def test_ActiveModel_get_unique_should_return_existing_node(self):
-        user_id = hashlib.sha224("user220").hexdigest()
+        user_id = hashlib.sha224("20user2").hexdigest()
         expected_user = self.g.user.create(model_id=user_id, username="user2", age=20)
-        retreived_user = User.get_unique(username="user2")
+        retreived_user = User.get_unique(username="user2", age=20)
         self.assertTrue(expected_user == retreived_user)
     
     def test_ActiveModel_get_unique_should_return_none_if_nothing_found(self):
@@ -91,7 +91,7 @@ class ActiveModelTests(unittest.TestCase):
         self.assertTrue('update' in dir(User))
     
     def test_ActiveModel_update_should_update_the_object_with_said_values(self):
-        user_id = hashlib.sha224("user227").hexdigest()
+        user_id = hashlib.sha224("27user2").hexdigest()
         user = self.g.user.create(model_id=user_id, username="user2", age=27)
         user.update(age=28)
         user = self.g.user.get(user._id)
@@ -129,8 +129,8 @@ class HasRelationshipTest(unittest.TestCase):
         Knows.register(self.g)
         Unknown.register(self.g)
         self.g.add_proxy('knows', Knows)
-        user1_id = hashlib.sha224("user110").hexdigest()
-        user2_id = hashlib.sha224("user210").hexdigest()
+        user1_id = hashlib.sha224("10user1").hexdigest()
+        user2_id = hashlib.sha224("10user2").hexdigest()
         self.user = self.g.user.create(model_id=user1_id, username='user1', age=10)
         self.known_user = self.g.user.create(model_id=user2_id, username='user2', age=10)
     
@@ -179,7 +179,7 @@ class IsMirrorRelationshipOfTest(unittest.TestCase):
         self.g = graph_db_path()
         self.g.add_proxy('knows', Knows)
         self.g.add_proxy('user', User)
-        user_id = hashlib.sha224('user110').hexdigest()
+        user_id = hashlib.sha224('10user1').hexdigest()
         self.user = self.g.user.create(model_id=user_id, username='user1', age=10)
     
     def test_should_add_dual_in_class(self):
