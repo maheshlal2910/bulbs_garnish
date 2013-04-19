@@ -23,10 +23,17 @@ class ParentOf(Relationship):
 @ActiveModel
 class Unknown(Node):
     element_type='unknown'
+    keys = ['id_field']
+    id_field = String(nullable=False)
 
+@ActiveModel
+class Dog(Node):
+    element_type='dog'
+    keys = ['name']
+    name = String(nullable=False)
 
 @HasRelationship({ParentOf:'user'})
-@HasRelationship({Knows:'user'})
+@HasRelationship({Knows:'user|dog'})
 @ActiveModel
 class User(Node):
     element_type='user'
@@ -128,6 +135,7 @@ class HasRelationshipTest(unittest.TestCase):
         User.register(self.g)
         Knows.register(self.g)
         Unknown.register(self.g)
+        Dog.register(self.g)
         self.g.add_proxy('knows', Knows)
         user1_id = hashlib.sha224("10user1").hexdigest()
         user2_id = hashlib.sha224("10user2").hexdigest()
@@ -148,7 +156,7 @@ class HasRelationshipTest(unittest.TestCase):
         self.assertTrue(self.user.knows() is not None)
     
     def test_throws_error_if_unsupported_type_supplied(self):
-        unknown = self.g.unknown.create(model_id='1')
+        unknown = self.g.unknown.create(model_id='1', id_field='1')
         with self.assertRaises(AssertionError):
             self.user.knows(unknown)
     
@@ -169,6 +177,12 @@ class HasRelationshipTest(unittest.TestCase):
     def test_shouldnt_add_dual_to_relationships_which_arent_dual(self):
         self.user.parent_of(self.known_user)
         self.assertTrue(self.known_user.parent_of() is None)
+    
+    def test_should_allow_multiple_node_types_to_be_related_to_node(self):
+        self.user.knows(self.known_user)
+        dog = Dog.get_or_create(name="dog")
+        self.user.knows(dog)
+        self.assertTrue(dog in self.user.knows())
     
     def tearDown(self):
         self.g.clear()

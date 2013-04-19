@@ -26,7 +26,8 @@ class HasRelationship(object):
     
     def __create_proxy(self, relationship, rel_class):
         def proxy_func(self, entity=None):
-            assert entity is None or entity.element_type==rel_class
+            allowed_relationships = rel_class.split('|')
+            assert entity is None or entity.element_type in allowed_relationships
             if entity is None:
                 return self.outV(relationship.label)
             rels = self.outV(relationship.label)
