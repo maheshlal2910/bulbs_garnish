@@ -156,7 +156,7 @@ class HasRelationshipTest(unittest.TestCase):
         self.assertTrue(self.user.knows() is not None)
     
     def test_throws_error_if_unsupported_type_supplied(self):
-        unknown = self.g.unknown.create(model_id='1', id_field='1')
+        unknown = self.g.unknown.create(model_id='1', id_field='')
         with self.assertRaises(AssertionError):
             self.user.knows(unknown)
     
